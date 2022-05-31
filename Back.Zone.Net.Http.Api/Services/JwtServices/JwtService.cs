@@ -70,4 +70,11 @@ public sealed class JwtService
         var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
         return computedHash.SequenceEqual(hash);
     }
+    
+    public Either<ApiResponse, string> VerifyPassword(string username, string password, byte[] hash, byte[] salt)
+    {
+        using var hmac = new HMACSHA512(salt);
+        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+        return computedHash.SequenceEqual(hash) ? username : ApiResponse.FailedWithMessage("#WRONG_PASSWORD#");
+    }
 }
