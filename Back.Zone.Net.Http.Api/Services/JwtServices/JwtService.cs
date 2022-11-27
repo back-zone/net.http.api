@@ -1,9 +1,10 @@
+using System.Collections.Immutable;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Back.Zone.Monads.EitherMonad;
-using Back.Zone.Monads.TryMonad;
+using Back.Zone.Monads.IOMonad;
 using Back.Zone.Net.Http.Api.Configurations;
 using Back.Zone.Net.Http.Api.Models.JwtModels;
 using Back.Zone.Net.Http.TransferObjects.HttpResponseObjects;
@@ -20,9 +21,9 @@ public sealed class JwtService
         _jwtConfiguration = jwtConfiguration;
     }
 
-    public Either<ApiResponse, JwtCredentials> GenerateCredentials(string username, string password)
+    public IO<JwtCredentials> GenerateCredentials(string username, string password)
     {
-        static JwtCredentials GetCredentials(string username, string password)
+        JwtCredentials GetCredentials()
         {
             using var hmacSha = new HMACSHA512();
             var salt = hmacSha.Key;
@@ -31,23 +32,18 @@ public sealed class JwtService
             return new JwtCredentials(username, hash, salt);
         }
 
-        return Try
-            .From(GetCredentials(username, password))
-            .Fold<Either<ApiResponse, JwtCredentials>>(
-                exception => ApiResponse.FailedWithException(exception),
-                credentials => credentials
-            );
+        return IO.From(GetCredentials);
     }
 
-    public Either<ApiResponse, string> GenerateToken(List<Claim> claims, DateTime? expires)
+    public IO<string> GenerateToken(ImmutableList<Claim> claims, DateTime? expiryDate)
     {
-        string GetToken(List<Claim> claims)
+        string GetToken()
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfiguration.Secret));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: expires,
+                expires: expiryDate,
                 signingCredentials: credentials
             );
 
@@ -56,25 +52,32 @@ public sealed class JwtService
             return jwtToken;
         }
 
-        return Try
-            .From(GetToken(claims))
-            .Fold<Either<ApiResponse, string>>(
-                exception => ApiResponse.FailedWithException(exception),
-                token => token
-            );
+        return IO.From(GetToken);
     }
 
-    public bool VerifyPassword(string password, byte[] hash, byte[] salt)
+    private static IO<bool> VerifyPassword(string password, byte[] hash, byte[] salt)
     {
-        using var hmac = new HMACSHA512(salt);
-        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return computedHash.SequenceEqual(hash);
+        bool Verify()
+        {
+            using var hmacSha = new HMACSHA512(salt);
+            var computedHash = hmacSha.ComputeHash(Encoding.UTF8.GetBytes(password));
+
+            return computedHash.SequenceEqual(hash);
+        }
+
+        return IO.From(Verify);
     }
     
     public Either<ApiResponse, string> VerifyPassword(string username, string password, byte[] hash, byte[] salt)
     {
-        using var hmac = new HMACSHA512(salt);
-        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return computedHash.SequenceEqual(hash) ? username : ApiResponse.FailedWithMessage("#WRONG_PASSWORD#");
+        return
+            VerifyPassword(password, hash, salt)
+                .ToEither()
+                .Map<Either<ApiResponse, string>>(verified =>
+                    verified
+                        ? username
+                        : ApiResponse.FailedWithMessage("#WRONG_PASSWORD")
+                )
+                .CheckError(exception => ApiResponse.FailedWithException(exception));
     }
 }

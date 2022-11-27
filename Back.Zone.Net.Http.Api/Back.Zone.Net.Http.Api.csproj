@@ -1,24 +1,25 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net6.0</TargetFramework>
+        <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageVersion>0.0.8.2</PackageVersion>
+        <PackageVersion>0.1.0.0</PackageVersion>
         <Title>backzone Net.Http.Api</Title>
         <RepositoryUrl>https://github.com/back-zone/net.http.api</RepositoryUrl>
         <PackageTags>backzone http.api, back.zone, http api, </PackageTags>
-        <AssemblyVersion>0.0.8.2</AssemblyVersion>
-        <FileVersion>0.0.8.2</FileVersion>
+        <AssemblyVersion>0.1.0.0</AssemblyVersion>
+        <FileVersion>0.1.0.0</FileVersion>
+        <LangVersion>11</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Back.Zone.Monads" Version="0.0.9" />
-      <PackageReference Include="Back.Zone.Net.Http" Version="0.0.8" />
-      <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.17.0" />
+      <PackageReference Include="Back.Zone.Monads" Version="0.1.0" />
+      <PackageReference Include="Back.Zone.Net.Http" Version="0.1.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
+      <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.25.0" />
     </ItemGroup>
 
 </Project>
